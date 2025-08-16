@@ -1,8 +1,20 @@
 from django import forms
-from .models import Post
+from .models import Comment
 
-class PostForm(forms.ModelForm):
+class CommentForm(forms.ModelForm):
     class Meta:
-        model = Post
-        fields = ['title', 'content']
+        model = Comment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Write your comment here...'}),
+        }
+        labels = {
+            'content': '',
+        }
+
+    def clean_content(self):
+        content = self.cleaned_data.get('content')
+        if not content or content.strip() == '':
+            raise forms.ValidationError("Comment cannot be empty.")
+        return content
 
