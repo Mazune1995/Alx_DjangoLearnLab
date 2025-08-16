@@ -1,21 +1,19 @@
-from django.db.models import Q
-from django.shortcuts import render, get_object_or_404
+from django.views.generic import ListView
+from taggit.models import Tag
 from .models import Post
 
-# Search view
-def post_search(request):
-    query = request.GET.get('q')
-    results = []
-    if query:
-        results = Post.objects.filter(
-            Q(title__icontains=query) |
-            Q(content__icontains=query) |
-            Q(tags__name__icontains=query)
-        ).distinct()
-    return render(request, 'blog/post_search.html', {'results': results, 'query': query})
+class PostByTagListView(ListView):
+    model = Post
+    template_name = "blog/post_by_tag.html"
+    context_object_name = "posts"
 
-# Filter posts by tag
-def post_by_tag(request, tag_name):
-    posts = Post.objects.filter(tags__name__in=[tag_name])
-    return render(request, 'blog/post_by_tag.html', {'posts': posts, 'tag_name': tag_name})
+    def get_queryset(self):
+        tag_slug = self.kwargs.get("tag_slug")
+        return Post.objects.filter(tags__slug=tag_slug)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        tag_slug = self.kwargs.get("tag_slug")
+        context["tag"] = Tag.objects.get(slug=tag_slug)
+        return context
 
