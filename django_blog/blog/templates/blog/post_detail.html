@@ -1,13 +1,11 @@
-{% extends 'blog/base.html' %}
-{% block content %}
-<h2>{{ object.title }}</h2>
-<p>by {{ object.author }} on {{ object.created_at|date:"M d, Y" }}</p>
-<p>{{ object.content }}</p>
+<h1>{{ post.title }}</h1>
+<p>{{ post.content }}</p>
 
-{% if request.user == object.author %}
-<a href="{% url 'post-update' object.pk %}">Edit</a> |
-<a href="{% url 'post-delete' object.pk %}">Delete</a>
-{% endif %}
-<a href="{% url 'post-list' %}">Back to Posts</a>
-{% endblock %}
+<p><strong>Tags:</strong>
+  {% for tag in post.tags.all %}
+    <a href="{% url 'post_by_tag' tag.name %}">{{ tag.name }}</a>{% if not forloop.last %}, {% endif %}
+  {% empty %}
+    No tags
+  {% endfor %}
+</p>
 
