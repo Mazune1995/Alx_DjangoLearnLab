@@ -1,5 +1,12 @@
 from django.db import models
 from django.conf import settings  # ✅ to reference AUTH_USER_MODEL
+class Library(models.Model):
+    name = models.CharField(max_length=100)
+    books = models.ManyToManyField('bookshelf.Book', related_name='libraries')
+
+    def __str__(self):
+        return self.name
+
 
 
 class Author(models.Model):
@@ -20,7 +27,8 @@ class Book(models.Model):
 class Library(models.Model):
     name = models.CharField(max_length=100)
     # ✅ Corrected reference to Book from another app ("bookshelf")
-    books = models.ManyToManyField('bookshelf.Book')
+    books = models.ManyToManyField('bookshelf.Book', related_name='libraries')
+
 
     def __str__(self):
         return self.name
@@ -43,4 +51,9 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.user.username
+class Library(models.Model):
+    name = models.CharField(max_length=100)
+    books = models.ManyToManyField('bookshelf.Book', related_name='libraries')
 
+    def __str__(self):
+        return self.name
