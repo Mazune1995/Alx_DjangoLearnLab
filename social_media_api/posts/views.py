@@ -24,4 +24,26 @@ class CommentViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user, post_id=self.kwargs.get("post_pk"))
+from rest_framework import viewsets, permissions
+from .models import Post, Comment
+from .serializers import PostSerializer, CommentSerializer
+
+# Permission class to allow only owners to edit/delete
+class IsOwnerOrReadOnly(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed for any request
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        # Write permissions only for the owner
+        return obj.author == request.user
+
+class PostViewSet(viewsets.ModelViewSet):
+    queryset = Post.objects.all()  # Post queryset
+    serializer_class = PostSerializer
+    permission_classes = [IsOwnerOrReadOnly]
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()  # <- This line was missing
+    serializer_class = CommentSerializer
+    permission_classes = [IsOwnerOrReadOnly]
 
