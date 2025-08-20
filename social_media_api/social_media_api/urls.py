@@ -16,6 +16,20 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from django.urls import path, include
+
+urlpatterns = [
+    path("api/accounts/", include("accounts.urls")),
+    path("api/posts/", include("posts.urls")),
+]
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/accounts/', include('accounts.urls')),
+    path('api/posts/', include('posts.urls')),
+]
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,5 +47,18 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/accounts/', include('accounts.urls')),  # Existing accounts URLs
     path('api/posts/', include('posts.urls')),        # Add this line for posts
+]
+# social_media_api/urls.py
+from django.urls import path, include
+
+urlpatterns = [
+    path("api/accounts/", include("accounts.urls")),
+]
+# social_media_api/urls.py
+from django.urls import path, include
+
+urlpatterns = [
+    path("api/accounts/", include("accounts.urls")),
+    path("api/posts/", include("posts.urls")),
 ]
 

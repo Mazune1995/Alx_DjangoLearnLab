@@ -1,75 +1,60 @@
-from rest_framework import generics, status
+from rest_framework import status, generics
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 
-class RegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]
+from .serializers import UserSerializer
+from .models import CustomUser, UserFollow   # ✅ import your models here
 
 
-class LoginView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            'token': token.key,
-            'user': UserSerializer(user).data
-        })
-# accounts/views.py
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny, IsAuthenticated
-from .serializers import RegisterSerializer, LoginSerializer, UserSerializer
-from .models import CustomUser
-
-
-class RegisterView(generics.CreateAPIView):
-    serializer_class = RegisterSerializer
-    permission_classes = [AllowAny]
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            "token": token.key,
-            "user": UserSerializer(user).data
-        }, status=status.HTTP_201_CREATED)
-
-
-class LoginView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = LoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.validated_data
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            "token": token.key,
-            "user": UserSerializer(user).data
-        })
-
-
-class ProfileView(APIView):
+class FollowUserView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        return Response(UserSerializer(request.user).data)
+    def post(self, request, user_id):
+        target_user = get_object_or_404(CustomUser, id=user_id)
 
-    def put(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(UserSerializer(request.user).data)
+        if target_user == request.user:
+            return Response(
+                {"detail": "You cannot follow yourself."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        follow, created = UserFollow.objects.get_or_create(
+            follower=request.user,
+            following=target_user
+        )
+
+        if created:
+            return Response(
+                {"detail": f"You are now following {target_user.username}."},
+                status=status.HTTP_201_CREATED
+            )
+        else:
+            return Response(
+                {"detail": f"You already follow {target_user.username}."},
+                status=status.HTTP_200_OK
+            )
+
+
+class UnfollowUserView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        target_user = get_object_or_404(CustomUser, id=user_id)
+
+        deleted, _ = UserFollow.objects.filter(
+            follower=request.user,
+            following=target_user
+        ).delete()
+
+        if deleted:
+            return Response(
+                {"detail": f"You unfollowed {target_user.username}."},
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"detail": f"You were not following {target_user.username}."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
