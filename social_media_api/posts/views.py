@@ -1,19 +1,22 @@
-# posts/views.py
+from rest_framework import generics, permissions
+from rest_framework.response import Response
+from django.shortcuts import get_list_or_404
 
-from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
-from .models import Post            
-from accounts.models import CustomUser, UserFollow  
+from .models import Post
 from .serializers import PostSerializer
 
+
 class FeedView(generics.ListAPIView):
+    """
+    Returns a feed of posts from users that the authenticated user follows.
+    Ordered by most recent first.
+    """
     serializer_class = PostSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        user = self.request.user
-        # Get the IDs of users this user is following
-        following_users = UserFollow.objects.filter(follower=user).values_list('following', flat=True)
-        # Return posts from those users
-        return Post.objects.filter(author__in=following_users).order_by('-created_at')
+        # Users that the current user follows
+        followed_users = self.request.user.following.all()
+        # Return posts only from followed users, newest first
+        return Post.objects.filter(author__in=followed_users).order_by("-created_at")
 
