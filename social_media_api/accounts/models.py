@@ -1,14 +1,13 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
-
 class CustomUser(AbstractUser):
-    # Many-to-many self relationship for following users
+    # Self-referential ManyToMany for following system
     following = models.ManyToManyField(
         "self",
-        symmetrical=False,
+        symmetrical=False,           # following is not mutual by default
         related_name="followers",
-        blank=True,
+        blank=True
     )
 
     def __str__(self):
